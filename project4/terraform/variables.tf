@@ -19,12 +19,14 @@ variable "db_username" {
   description = "The username for the Cloud SQL database"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "db_password" {
   description = "The password for the Cloud SQL database"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "app_repo_url" {

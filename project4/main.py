@@ -11,6 +11,8 @@ import db
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.secret_key = "37a80ad2941822e13becf9559fa15a997cf74efcf28782050a59baef52d0e5d5"
+
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
