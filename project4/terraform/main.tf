@@ -84,11 +84,9 @@ resource "google_service_networking_connection" "private_vpc_connection" {
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
 
-# Commenting out Cloud SQL resources temporarily
-/*
 # Cloud SQL Instance
 resource "google_sql_database_instance" "gallery_db" {
-  name             = "gallery-db"
+  name             = "gallery-db-${formatdate("YYYYMMDDHHmmss", timestamp())}"
   database_version = "MYSQL_8_0"
   region           = var.region
   deletion_protection = false
@@ -97,11 +95,17 @@ resource "google_sql_database_instance" "gallery_db" {
     tier = "db-n1-standard-1"
     ip_configuration {
       ipv4_enabled = true
-      authorized_networks {
-        name  = "all"
-        value = "0.0.0.0/0"
-      }
+      private_network = google_compute_network.vpc_network.id
     }
+    backup_configuration {
+      enabled = true
+    }
+  }
+
+  depends_on = [google_service_networking_connection.private_vpc_connection]
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -109,6 +113,10 @@ resource "google_sql_database_instance" "gallery_db" {
 resource "google_sql_database" "gallery" {
   name     = "gallery"
   instance = google_sql_database_instance.gallery_db.name
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Database User
@@ -116,21 +124,28 @@ resource "google_sql_user" "gallery_user" {
   name     = var.db_username
   password = var.db_password
   instance = google_sql_database_instance.gallery_db.name
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
-*/
 
 # Cloud Storage Bucket
 resource "google_storage_bucket" "gallery_bucket" {
-  name          = "${var.project_id}-gallery-bucket"
+  name          = "${var.project_id}-gallery-bucket-${formatdate("YYYYMMDDHHmmss", timestamp())}"
   location      = var.region
   force_destroy = true
 
   uniform_bucket_level_access = true
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Compute Instance
 resource "google_compute_instance" "gallery_app" {
-  name         = "gallery-app"
+  name         = "gallery-app-${formatdate("YYYYMMDDHHmmss", timestamp())}"
   machine_type = "e2-standard-2"
   zone         = var.zone
   tags         = ["https-server", "gallery-app"]
@@ -152,6 +167,9 @@ resource "google_compute_instance" "gallery_app" {
       bucket_name          = google_storage_bucket.gallery_bucket.name
       app_repo_url         = var.app_repo_url
       app_repo_branch      = var.app_repo_branch
+      db_username          = var.db_username
+      db_password          = var.db_password
+      region              = var.region
     })
   }
 
@@ -160,6 +178,10 @@ resource "google_compute_instance" "gallery_app" {
     access_config {
       // Ephemeral public IP
     }
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 

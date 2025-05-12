@@ -19,13 +19,10 @@ if os.environ.get("GAE_ENV") == "standard":
         config.DB_USER, config.DB_PASSWORD, config.DB_NAME, unix_socket
     )
 else:
-    # If running locally, use the TCP connections instead
-    # Set up Cloud SQL Proxy (cloud.google.com/sql/docs/mysql/sql-proxy)
-    # so that your application can use 127.0.0.1:3306 to connect to your
-    # Cloud SQL instance
-    host = "127.0.0.1"
-    engine_url = "mysql+pymysql://{}:{}@{}/{}".format(
-        config.DB_USER, config.DB_PASSWORD, host, config.DB_NAME
+    # If running locally, use the Unix socket for Cloud SQL Auth proxy
+    unix_socket = "/var/run/cloud-sql-proxy.sock"
+    engine_url = "mysql+pymysql://{}:{}@/{}?unix_socket={}".format(
+        config.DB_USER, config.DB_PASSWORD, config.DB_NAME, unix_socket
     )
 
 # Initialize Google Cloud SQL
