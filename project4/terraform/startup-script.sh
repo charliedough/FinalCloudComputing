@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Update system and install dependencies
+apt-get update
+apt-get install -y python3-pip python3-venv git
+
+# Create application directory
+mkdir -p /opt/gallery-app
+cd /opt/gallery-app
+
+# Clone the application repository
+git clone ${app_repo_url} .
+git checkout ${app_repo_branch}
+
+# Move files from project4 to root directory
+mv project4/* .
+mv project4/.* . 2>/dev/null || true
+rmdir project4
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install application dependencies
+pip install -r requirements.txt
+
+# Create environment file
+cat > .env << EOL
+GOOGLE_CLOUD_PROJECT=${project_id}
+GCS_BUCKET_NAME=${bucket_name}
+FLASK_SECRET_KEY=$(openssl rand -hex 32)
+EOL
+
+# Create systemd service
+cat > /etc/systemd/system/gallery-app.service << EOL
+[Unit]
+Description=Gallery Application
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/gallery-app
+Environment="PATH=/opt/gallery-app/venv/bin"
+ExecStart=/opt/gallery-app/venv/bin/python main.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Enable and start the service
+systemctl enable gallery-app
+systemctl start gallery-app
+
+# Add health check endpoint
+cat > /opt/gallery-app/health.py << EOL
+from flask import Flask
+from google.cloud import storage
+import os
+
+app = Flask(__name__)
+
+@app.route('/health')
+def health_check():
+    try:
+        # Test storage connection
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(os.getenv('GCS_BUCKET_NAME'))
+        bucket.exists()
+
+        return 'OK', 200
+    except Exception as e:
+        return str(e), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8081)
+EOL
+
+# Create health check service
+cat > /etc/systemd/system/gallery-health.service << EOL
+[Unit]
+Description=Gallery Application Health Check
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/gallery-app
+Environment="PATH=/opt/gallery-app/venv/bin"
+Environment="VIRTUAL_ENV=/opt/gallery-app/venv"
+ExecStart=/opt/gallery-app/venv/bin/python /opt/gallery-app/health.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Enable and start health check service
+systemctl enable gallery-health
+systemctl start gallery-health 

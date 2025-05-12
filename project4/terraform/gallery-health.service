@@ -1,0 +1,14 @@
+[Unit]
+Description=Gallery Application Health Check
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/gallery-app
+Environment="PATH=/opt/gallery-app/venv/bin"
+Environment="VIRTUAL_ENV=/opt/gallery-app/venv"
+ExecStart=/opt/gallery-app/venv/bin/python /opt/gallery-app/health.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target 
