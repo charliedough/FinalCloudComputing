@@ -1,17 +1,3 @@
-terraform {
-  required_version = ">= 1.0.0"
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 6.34.1"
-    }
-  }
-  backend "gcs" {
-    bucket = "gallery-app-terraform-state"
-    prefix = "terraform/state"
-  }
-}
-
 provider "google" {
   project = var.project_id
   region  = var.region
@@ -21,8 +7,6 @@ provider "google" {
 # VPC Network
 resource "google_compute_network" "vpc_network" {
   name                    = "gallery-vpc"
-  auto_create_subnetworks = false
-  mtu                     = 1460
   description             = "Custom VPC for Gallery App"
 }
 
@@ -36,18 +20,18 @@ resource "google_compute_subnetwork" "default" {
 }
 
 # Firewall Rules
-resource "google_compute_firewall" "allow_http_https" {
-  name    = "allow-http-https"
+resource "google_compute_firewall" "allow_http_ssh" {
+  name    = "allow-http-ssh"
   network = google_compute_network.vpc_network.name
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "80", "443", "8080"]
+    ports    = ["22", "80"]
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["https-server"]
-  description   = "Allow HTTP, HTTPS, and Flask port access"
+  target_tags   = ["ssh", "http-server"]
+  description   = "Allow HTTP and SSH port access"
 }
 
 # Service Account
@@ -79,44 +63,36 @@ resource "google_compute_global_address" "private_ip_address" {
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
+  provider                = google
   network                 = google_compute_network.vpc_network.id
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
 
 # Cloud SQL Instance
-resource "google_sql_database_instance" "gallery_db" {
-  name             = "gallery-db"
+resource "google_sql_database_instance" "gallery_sql_db" {
+  name             = "gallery-sql-db"
   database_version = "MYSQL_8_0"
   region           = var.region
-  deletion_protection = false
 
   settings {
-    tier = "db-n1-standard-1"
+    tier = "db-f1-micro"
     ip_configuration {
-      ipv4_enabled = true
-      private_network = google_compute_network.vpc_network.id
+      ipv4_enabled = false
+      enable_private_path_for_google_cloud_services = true
+
+      private_network = google_compute_network.vpc_network.self_link
     }
     backup_configuration {
       enabled = true
     }
   }
-
-  depends_on = [google_service_networking_connection.private_vpc_connection]
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 # Database
-resource "google_sql_database" "gallery" {
+resource "google_sql_database" "gallery_db" {
   name     = "gallery"
   instance = google_sql_database_instance.gallery_db.name
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 # Database User
@@ -124,31 +100,28 @@ resource "google_sql_user" "gallery_user" {
   name     = var.db_username
   password = var.db_password
   instance = google_sql_database_instance.gallery_db.name
+}
 
-  lifecycle {
-    create_before_destroy = true
-  }
+# Admin User
+resource "google_project_service" "sql_admin" {
+  project = var.project_id
+  service = "sqladmin.googleapis.com"
 }
 
 # Cloud Storage Bucket
-resource "google_storage_bucket" "gallery_bucket" {
-  name          = "gallery-db"
+resource "google_storage_bucket" "flask_gallery_bucket" {
+  name          = "gallery-bucket"
   location      = var.region
   force_destroy = true
-
-  uniform_bucket_level_access = true
-
-  lifecycle {
-    create_before_destroy = true
-  }
+  storage_class = "STANDARD"
 }
 
 # Compute Instance
 resource "google_compute_instance" "gallery_app" {
-  name         = "gallery-app"
+  name         = "gallery-app-flask"
   machine_type = "e2-standard-2"
   zone         = var.zone
-  tags         = ["https-server", "gallery-app"]
+  tags         = ["https-server", "gallery-app", "http-server"]
 
   boot_disk {
     initialize_params {
@@ -164,7 +137,7 @@ resource "google_compute_instance" "gallery_app" {
   metadata = {
     startup-script = templatefile("${path.module}/startup-script.sh", {
       project_id           = var.project_id
-      bucket_name          = google_storage_bucket.gallery_bucket.name
+      bucket_name          = google_storage_bucket.flask_gallery_bucket.name
       app_repo_url         = var.app_repo_url
       app_repo_branch      = var.app_repo_branch
       db_username          = var.db_username
@@ -174,14 +147,11 @@ resource "google_compute_instance" "gallery_app" {
   }
 
   network_interface {
+    network = google_compute_network.vpc_network.id
     subnetwork = google_compute_subnetwork.default.id
     access_config {
       // Ephemeral public IP
     }
-  }
-
-  lifecycle {
-    create_before_destroy = true
   }
 }
 
@@ -191,5 +161,5 @@ output "app_url" {
 }
 
 output "bucket_name" {
-  value = google_storage_bucket.gallery_bucket.name
+  value = google_storage_bucket.flask_gallery_bucket.name
 } 

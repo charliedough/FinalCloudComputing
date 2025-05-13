@@ -19,12 +19,12 @@ connector = Connector()
 # getconn now set to private IP
 def getconn():
     conn = connector.connect(
-      "finalexam422:us-central1:flask-mysql-db",
+      config.DB_INSTANCE_CONNECTION_NAME,
       "pymysql",
-      user="user",
-      password="password",
-      db="gallery",
-      ip_type=IPTypes.PUBLIC
+      user=config.DB_USER,
+      password=config.DB_PASSWORD,
+      db=config.DB_NAME,
+      ip_type=IPTypes.PRIVATE
     )
     return conn
 
