@@ -10,23 +10,32 @@ from werkzeug.exceptions import BadRequest
 from flask_login import UserMixin
 from sqlalchemy.ext.declarative import declarative_base
 from google.cloud import storage
+from google.cloud.sql.connector import Connector, IPTypes
 
-# When deployed to App Engine, the `GAE_ENV` environment variable will be
-if os.environ.get("GAE_ENV") == "standard":
-    # If deployed, use the local socket interface for accessing Cloud SQL
-    unix_socket = f"/cloudsql/{config.DB_INSTANCE_CONNECTION_NAME}"
-    engine_url = "mysql+pymysql://{}:{}@/{}?unix_socket={}".format(
-        config.DB_USER, config.DB_PASSWORD, config.DB_NAME, unix_socket
-    )
-else:
-    # If running locally, use the Unix socket for Cloud SQL Auth proxy
-    unix_socket = f"/cloudsql/{config.DB_INSTANCE_CONNECTION_NAME}"
-    engine_url = "mysql+pymysql://{}:{}@/{}?unix_socket={}".format(
-        config.DB_USER, config.DB_PASSWORD, config.DB_NAME, unix_socket
-    )
 
-# Initialize Google Cloud SQL
-engine = sqlalchemy.create_engine(engine_url, pool_size=3)
+# initialize connector
+connector = Connector()
+
+# getconn now set to private IP
+def getconn():
+    conn = connector.connect(
+      "finalexam422:us-central1:flask-mysql-db",
+      "pymysql",
+      user="user",
+      password="password",
+      db="gallery",
+      ip_type=IPTypes.PUBLIC
+    )
+    return conn
+
+# create connection pool with 'creator' argument to our connection object function
+engine = sqlalchemy.create_engine(
+    "mysql+pymysql://",
+    creator=getconn,
+    pool_size=3,
+)
+
+
 Session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
 
