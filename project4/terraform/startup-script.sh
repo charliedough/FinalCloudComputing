@@ -36,9 +36,7 @@ FLASK_SECRET_KEY=$(openssl rand -hex 32)
 CLOUD_SQL_USERNAME=${db_username}
 CLOUD_SQL_PASSWORD=${db_password}
 CLOUD_SQL_DATABASE_NAME=gallery
-CLOUD_SQL_CONNECTION_NAME=$(gcloud sql instances describe gallery-db-20250512103216 \
-  --project=${project_id} \
-  --format="value(connectionName)")
+CLOUD_SQL_CONNECTION_NAME=${project_id}:us-central1:gallery-db
 DB_HOST=127.0.0.1
 DB_PORT=3306
 EOL
@@ -52,7 +50,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/cloud-sql-proxy --unix-socket /var/run/cloud-sql-proxy.sock ${project_id}:us-central1:gallery-db-20250512103216
+ExecStart=/usr/local/bin/cloud-sql-proxy --unix-socket /var/run/cloud-sql-proxy.sock ${project_id}:us-central1:gallery-db
 Restart=always
 
 [Install]
