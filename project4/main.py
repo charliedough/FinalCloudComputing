@@ -11,6 +11,7 @@ import db
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.config["SESSION_TYPE"] = 'filesystem'
 app.secret_key = "37a80ad2941822e13becf9559fa15a997cf74efcf28782050a59baef52d0e5d5"
 
 login_manager = LoginManager(app)
@@ -104,6 +105,5 @@ def delete(photo_id):
 
     return redirect(url_for("gallery"))
 
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=80)

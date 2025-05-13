@@ -40,15 +40,3 @@ variable "app_repo_branch" {
   type        = string
   default     = "main"
 } 
-
-variable "username" {
-  description = "Username to SSH into the instance"
-  type        = string
-  default = "gallery_user"
-}
-
-variable "private_key_path" {
-  description = "Path to the private key for SSH"
-  type        = string
-  default = "~/.ssh/google_compute_engine"
-}

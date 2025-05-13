@@ -62,6 +62,8 @@ class Photo(Base):
 
     # Add relationship to User
     user = relationship("User", backref="photos")
+    
+Base.metadata.create_all(engine)
 
 
 # endregion

@@ -63,6 +63,10 @@ resource "google_compute_global_address" "private_ip_address" {
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
+  depends_on = [
+    google_compute_global_address.private_ip_address, # Reserve IP range first
+    google_project_service.sql_admin # Ensure API is enabled
+  ]
   provider                = google
   network                 = google_compute_network.vpc_network.id
   service                 = "servicenetworking.googleapis.com"
@@ -71,10 +75,14 @@ resource "google_service_networking_connection" "private_vpc_connection" {
 
 # Cloud SQL Instance
 resource "google_sql_database_instance" "gallery_sql_db" {
-  depends_on = [google_service_networking_connection.private_vpc_connection]
+  depends_on = [
+    google_service_networking_connection.private_vpc_connection, # VPC peering must exist first
+    google_project_service.sql_admin # Ensure SQL Admin API is enabled
+  ]
   name             = "gallery-sql-db"
   database_version = "MYSQL_8_0"
   region           = var.region
+  deletion_protection = false
 
   settings {
     tier = "db-f1-micro"
@@ -121,12 +129,19 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
+resource "google_storage_bucket_iam_member" "public" {
+  bucket = google_storage_bucket.flask_gallery_bucket.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
 # Compute Instance
 resource "google_compute_instance" "gallery_app" {
   name         = "gallery-app-flask"
   machine_type = "e2-standard-2"
   zone         = var.zone
   tags         = ["https-server", "gallery-app", "http-server"]
+  deletion_protection = false
 
   boot_disk {
     initialize_params {
