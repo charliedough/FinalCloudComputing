@@ -20,7 +20,7 @@ if os.environ.get("GAE_ENV") == "standard":
     )
 else:
     # If running locally, use the Unix socket for Cloud SQL Auth proxy
-    unix_socket = "/var/run/cloud-sql-proxy.sock"
+    unix_socket = f"/cloudsql/{config.DB_INSTANCE_CONNECTION_NAME}"
     engine_url = "mysql+pymysql://{}:{}@/{}?unix_socket={}".format(
         config.DB_USER, config.DB_PASSWORD, config.DB_NAME, unix_socket
     )

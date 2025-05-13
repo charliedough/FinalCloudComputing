@@ -183,6 +183,19 @@ resource "google_compute_instance" "gallery_app" {
   lifecycle {
     create_before_destroy = true
   }
+
+  provisioner "remote-exec" {
+  inline = [
+    "sudo mkdir /cloudsql"
+  ]
+}
+
+  connection {
+    type     = "ssh"
+    user     = var.username
+    private_key = file(var.private_key_path)
+    host     = self.network_interface[0].access_config[0].nat_ip
+  }
 }
 
 # Outputs

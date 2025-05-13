@@ -40,3 +40,13 @@ variable "app_repo_branch" {
   type        = string
   default     = "main"
 } 
+
+variable "username" {
+  description = "Username to SSH into the instance"
+  type        = string
+}
+
+variable "private_key_path" {
+  description = "Path to the private key for SSH"
+  type        = string
+}
