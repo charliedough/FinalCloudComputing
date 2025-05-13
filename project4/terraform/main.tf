@@ -86,7 +86,7 @@ resource "google_service_networking_connection" "private_vpc_connection" {
 
 # Cloud SQL Instance
 resource "google_sql_database_instance" "gallery_db" {
-  name             = "gallery-db-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+  name             = "gallery-db"
   database_version = "MYSQL_8_0"
   region           = var.region
   deletion_protection = false
@@ -132,7 +132,7 @@ resource "google_sql_user" "gallery_user" {
 
 # Cloud Storage Bucket
 resource "google_storage_bucket" "gallery_bucket" {
-  name          = "${var.project_id}-gallery-bucket-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+  name          = "gallery-db"
   location      = var.region
   force_destroy = true
 
@@ -145,7 +145,7 @@ resource "google_storage_bucket" "gallery_bucket" {
 
 # Compute Instance
 resource "google_compute_instance" "gallery_app" {
-  name         = "gallery-app-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+  name         = "gallery-app"
   machine_type = "e2-standard-2"
   zone         = var.zone
   tags         = ["https-server", "gallery-app"]
