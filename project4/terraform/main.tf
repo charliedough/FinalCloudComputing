@@ -71,6 +71,7 @@ resource "google_service_networking_connection" "private_vpc_connection" {
 
 # Cloud SQL Instance
 resource "google_sql_database_instance" "gallery_sql_db" {
+  depends_on = [google_service_networking_connection.private_vpc_connection]
   name             = "gallery-sql-db"
   database_version = "MYSQL_8_0"
   region           = var.region
@@ -92,14 +93,14 @@ resource "google_sql_database_instance" "gallery_sql_db" {
 # Database
 resource "google_sql_database" "gallery_db" {
   name     = "gallery"
-  instance = google_sql_database_instance.gallery_db.name
+  instance = google_sql_database_instance.gallery_sql_db.name
 }
 
 # Database User
 resource "google_sql_user" "gallery_user" {
   name     = var.db_username
   password = var.db_password
-  instance = google_sql_database_instance.gallery_db.name
+  instance = google_sql_database_instance.gallery_sql_db.name
 }
 
 # Admin User
@@ -110,10 +111,14 @@ resource "google_project_service" "sql_admin" {
 
 # Cloud Storage Bucket
 resource "google_storage_bucket" "flask_gallery_bucket" {
-  name          = "gallery-bucket"
+  name          = "gallery-bucket-${random_id.suffix.hex}"
   location      = var.region
   force_destroy = true
   storage_class = "STANDARD"
+}
+
+resource "random_id" "suffix" {
+  byte_length = 4
 }
 
 # Compute Instance

@@ -41,22 +41,6 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 EOL
 
-# Create Cloud SQL proxy service
-cat > /etc/systemd/system/cloud-sql-proxy.service << EOL
-[Unit]
-Description=Cloud SQL Auth Proxy
-After=network.target
-
-[Service]
-Type=simple
-User=root
-ExecStart=/usr/local/bin/cloud-sql-proxy --unix-socket /var/run/cloud-sql-proxy.sock ${project_id}:us-central1:gallery-db
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
 # Create systemd service
 cat > /etc/systemd/system/gallery-app.service << EOL
 [Unit]
