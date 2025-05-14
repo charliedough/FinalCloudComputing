@@ -17,7 +17,6 @@ flowchart TD
   google_sql_user_gallery_user["google_sql_user.gallery_user"]
   google_storage_bucket_flask_gallery_bucket["google_storage_bucket.flask_gallery_bucket"]
   google_storage_bucket_iam_member_public["google_storage_bucket_iam_member.public"]
-  random_id_suffix["random_id.suffix"]
 
   %% Edges
   google_compute_firewall_allow_http_ssh --> google_compute_network_vpc_network
