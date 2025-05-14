@@ -1,6 +1,5 @@
 flowchart RL
 
-```markdown
 ## Infrastructure Diagram
 ```mermaid
   %% Nodes
