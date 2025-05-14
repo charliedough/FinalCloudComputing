@@ -1,5 +1,7 @@
 flowchart RL
 
+```markdown
+## Infrastructure Diagram
 ```mermaid
   %% Nodes
   google_compute_firewall_allow_http_ssh["google_compute_firewall.allow_http_ssh"]
