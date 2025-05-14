@@ -35,6 +35,7 @@ var/
 .terraformrc
 terraform.rc
 .terraform.lock.hcl
+terraform.tfvars
 
 # Environment variables
 .env

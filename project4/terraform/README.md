@@ -73,7 +73,7 @@ The infrastructure consists of the following components:
 ## Accessing the Application
 
 After successful deployment, the application will be available at:
-- Main application: http://<VM-IP>:8080
+- Main application: http://<VM-IP>:80
 - Health check: http://<VM-IP>:8081/health
 
 ## Monitoring
