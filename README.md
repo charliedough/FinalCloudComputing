@@ -1,4 +1,4 @@
-## Infrastructure Diagram
+## Architecture Diagram
 ```mermaid
 flowchart TD
   %% Nodes
