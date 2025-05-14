@@ -1,4 +1,6 @@
 flowchart RL
+
+```mermaid
   %% Nodes
   google_compute_firewall_allow_http_ssh["google_compute_firewall.allow_http_ssh"]
   google_compute_global_address_private_ip_address["google_compute_global_address.private_ip_address"]
