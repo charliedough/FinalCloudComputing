@@ -9,7 +9,6 @@ flowchart TD
   google_compute_subnetwork_default["google_compute_subnetwork.default"]
   google_project_iam_member_cloudsql_client["google_project_iam_member.cloudsql_client"]
   google_project_iam_member_storage_admin["google_project_iam_member.storage_admin"]
-  google_project_service_sql_admin["google_project_service.sql_admin"]
   google_service_account_gallery_app["google_service_account.gallery_app"]
   google_service_networking_connection_private_vpc_connection["google_service_networking_connection.private_vpc_connection"]
   google_sql_database_gallery_db["google_sql_database.gallery_db"]
